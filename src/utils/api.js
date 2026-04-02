@@ -1,4 +1,4 @@
-const PROXY_URL = 'http://localhost:3001/api/search';
+const PROXY_URL = '/api/search';
 
 export const searchProducts = async (query) => {
   try {
