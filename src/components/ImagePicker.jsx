@@ -45,8 +45,8 @@ const ImagePicker = ({ onIdentify, onClose }) => {
   };
 
   const handleConfirmSearch = () => {
-    if (identifiedName) {
-      onIdentify(identifiedName);
+    if (identifiedName && preview) {
+      onIdentify(identifiedName, preview);
     }
   };
 
