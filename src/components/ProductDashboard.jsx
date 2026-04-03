@@ -7,10 +7,21 @@ const ProductDashboard = ({ products }) => {
 
   const parsePrice = (priceStr) => {
     if (!priceStr) return 0;
-    // Robust cleaning for currency symbols and separator commas
-    const cleaned = priceStr.toString().replace(/[^0-9.]/g, '');
+    // Robust cleaning for INR formats (₹, Rs., commas)
+    const cleaned = priceStr.toString()
+      .replace(/₹|Rs\.|INR/gi, '')
+      .replace(/,/g, '')
+      .trim();
     const value = parseFloat(cleaned);
     return (isNaN(value) || value <= 0) ? 0 : value;
+  };
+
+  const formatINR = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(amount);
   };
 
   // Filter for valid prices (greater than 0) before sorting
@@ -60,7 +71,7 @@ const ProductDashboard = ({ products }) => {
             <span className="label">Historical Low</span>
             <div className="value-row">
               <CheckCircle2 size={18} className="text-success" />
-              <span className="value">₹{minPrice.toLocaleString()} ({minMonth})</span>
+              <span className="value">{formatINR(minPrice)} ({minMonth})</span>
             </div>
           </div>
           <div className="insight-item">
@@ -85,8 +96,10 @@ const ProductDashboard = ({ products }) => {
       </div>
 
       <div className="grid-comparison">
-        {products.map((product) => {
+        {sortedByPrice.map((product) => {
           const isLowest = product.id === bestOffer?.id;
+          const displayPrice = product.price.includes('₹') ? product.price : formatINR(parsePrice(product.price));
+          
           return (
             <div key={product.id} className={`apple-card ${isLowest ? 'featured' : ''}`}>
               {isLowest && <div className="best-price-ribbon">Best Value</div>}
@@ -103,7 +116,7 @@ const ProductDashboard = ({ products }) => {
                 <div className="bottom-row">
                   <div className="price-stack">
                     <span className="price-label">Price</span>
-                    <span className="price-val">{product.price}</span>
+                    <span className="price-val">{displayPrice}</span>
                   </div>
                   <a href={product.link} target="_blank" rel="noopener noreferrer" className="buy-btn">
                     Buy <ExternalLink size={14} />

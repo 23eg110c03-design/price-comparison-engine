@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Camera, Sparkles, Loader2, Info } from 'lucide-react';
-import CameraDetector from './components/CameraDetector';
+import { Search, Image, Sparkles, Loader2, Info } from 'lucide-react';
+import ImagePicker from './components/ImagePicker';
 import ProductDashboard from './components/ProductDashboard';
 import ShoppingGuide from './components/ShoppingGuide';
 import { searchProducts } from './utils/api';
@@ -8,7 +8,7 @@ import { searchProducts } from './utils/api';
 function App() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
 
@@ -34,10 +34,22 @@ function App() {
 
   const onIdentify = (name) => {
     setQuery(name);
-    setShowCamera(false);
-    setTimeout(() => {
-      document.getElementById('search-form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-    }, 100);
+    setShowPicker(false);
+    // Use manual trigger for search
+    handleSearchAutomated(name);
+  };
+
+  const handleSearchAutomated = async (searchQuery) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await searchProducts(searchQuery);
+      setResults(data);
+    } catch (err) {
+      setError("Failed identifying product data.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,21 +71,21 @@ function App() {
           <form id="search-form" onSubmit={handleSearch} className="apple-search-wrapper">
             <div className="search-pill">
               <Search className="search-icon" size={20} />
-              <input 
+                <input 
                 type="text" 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search for electronics, fashion, or groceries..."
+                placeholder="Search for Mobiles, Kurtas, Groceries and more..."
                 className="apple-input"
               />
               <div className="search-actions">
                 <button 
                   type="button" 
-                  onClick={() => setShowCamera(true)}
+                  onClick={() => setShowPicker(true)}
                   className="icon-btn"
-                  title="Camera Identification"
+                  title="Identify Product from Image"
                 >
-                  <Camera size={20} />
+                  <Image size={20} />
                 </button>
                 <button type="submit" disabled={loading} className="search-submit">
                   {loading ? <Loader2 className="spin" size={20} /> : 'Search'}
@@ -99,10 +111,10 @@ function App() {
         <ShoppingGuide />
       </main>
 
-      {showCamera && (
-        <CameraDetector 
+      {showPicker && (
+        <ImagePicker 
           onIdentify={onIdentify} 
-          onClose={() => setShowCamera(false)} 
+          onClose={() => setShowPicker(false)} 
         />
       )}
 

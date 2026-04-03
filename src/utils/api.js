@@ -13,43 +13,53 @@ export const searchProducts = async (query) => {
     // Helper to map results
     const mapItems = (items, defaultPlatform, badgeClass) => {
       if (!items) return;
-      items.slice(0, 5).forEach(item => {
-        // Safely extract price as a string
+      items.slice(0, 10).forEach(item => { 
         let priceDisplay = 'Check Site';
         let platform = item.source || defaultPlatform;
         
+        // Extract raw price string
         if (typeof item.price === 'string') {
           priceDisplay = item.price;
         } else if (item.price && typeof item.price === 'object' && item.price.raw) {
           priceDisplay = item.price.raw;
         } else if (item.extracted_price) {
-          // Default to INR for Indian results
           priceDisplay = `₹${item.extracted_price}`;
+        }
+
+        // Standardize to INR symbol
+        priceDisplay = priceDisplay.replace(/Rs\.|INR/gi, '₹').trim();
+        if (!priceDisplay.includes('₹') && /\d/.test(priceDisplay)) {
+          priceDisplay = `₹${priceDisplay}`;
         }
 
         // Standardize platform badges for Indian sites
         let currentBadge = badgeClass;
-        if (platform.toLowerCase().includes('flipkart')) currentBadge = 'badge-flipkart';
-        if (platform.toLowerCase().includes('myntra')) currentBadge = 'badge-myntra';
-        if (platform.toLowerCase().includes('ajio')) currentBadge = 'badge-ajio';
+        const lowPlatform = platform.toLowerCase();
+        if (lowPlatform.includes('flipkart')) { platform = 'Flipkart'; currentBadge = 'badge-flipkart'; }
+        if (lowPlatform.includes('myntra')) { platform = 'Myntra'; currentBadge = 'badge-myntra'; }
+        if (lowPlatform.includes('ajio')) { platform = 'Ajio'; currentBadge = 'badge-ajio'; }
+        if (lowPlatform.includes('amazon')) { platform = 'Amazon'; currentBadge = 'badge-amazon'; }
+
+        // Extract the best available direct link
+        const finalLink = item.link || item.product_link || item.serpapi_link || '#';
 
         products.push({
           id: `${platform.toLowerCase()}-${item.position || Math.random()}`,
           title: item.title,
           price: priceDisplay,
-          currency: item.currency || (badgeClass === 'badge-india' ? '₹' : '₹'),
+          currency: '₹',
           image: item.thumbnail || item.image,
-          link: item.link,
+          link: finalLink,
           platform: platform,
           badgeClass: currentBadge
         });
       });
     };
 
-    // Map Results
+    // Map Results - Prioritize Indian Results first
+    mapItems(indiaRes.shopping_results, 'Indian Market', 'badge-india');
     mapItems(amazonRes.organic_results || amazonRes.shopping_results, 'Amazon', 'badge-amazon');
     mapItems(ebayRes.shopping_results || ebayRes.organic_results, 'eBay', 'badge-ebay');
-    mapItems(indiaRes.shopping_results, 'Indian Store', 'badge-india');
 
     console.log('Processed Products:', products);
     return products;
