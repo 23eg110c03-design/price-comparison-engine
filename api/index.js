@@ -98,7 +98,7 @@ app.post('/api/identify', async (req, res) => {
             content: [
               {
                 type: 'text',
-                text: 'Identify the main product in this image. Return only its exact search-friendly name. Return nothing else.',
+                text: 'Analyze this image and identify the specific commercial product shown. Focus on the brand name, model, and primary category. Return ONLY a concise, search-optimized product title (e.g., "Sony WH-1000XM4 Headphones") that would yield the best shopping results. If the product is not clearly identifiable, provide the most likely specific search term. Return nothing else.',
               },
               {
                 type: 'image_url',
