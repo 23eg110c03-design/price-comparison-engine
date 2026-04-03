@@ -5,6 +5,7 @@ const ImagePicker = ({ onIdentify, onClose }) => {
   const fileInputRef = useRef(null);
   const [identifying, setIdentifying] = useState(false);
   const [preview, setPreview] = useState(null);
+  const [identifiedName, setIdentifiedName] = useState('');
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -13,6 +14,7 @@ const ImagePicker = ({ onIdentify, onClose }) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreview(reader.result);
+      setIdentifiedName('');
       identifyProduct(reader.result);
     };
     reader.readAsDataURL(file);
@@ -21,7 +23,7 @@ const ImagePicker = ({ onIdentify, onClose }) => {
   const identifyProduct = async (base64Image) => {
     setIdentifying(true);
     try {
-      const response = await fetch('http://localhost:3001/api/identify', {
+      const response = await fetch('/api/identify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: base64Image })
@@ -30,7 +32,7 @@ const ImagePicker = ({ onIdentify, onClose }) => {
       if (response.ok) {
         const data = await response.json();
         if (data.product) {
-          onIdentify(data.product);
+          setIdentifiedName(data.product);
         }
       } else {
         console.error('Failed to analyze image');
@@ -42,6 +44,17 @@ const ImagePicker = ({ onIdentify, onClose }) => {
     }
   };
 
+  const handleConfirmSearch = () => {
+    if (identifiedName) {
+      onIdentify(identifiedName);
+    }
+  };
+
+  const resetPicker = () => {
+    setPreview(null);
+    setIdentifiedName('');
+  };
+
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
@@ -51,7 +64,7 @@ const ImagePicker = ({ onIdentify, onClose }) => {
       <div className="glass-card picker-container">
         <button onClick={onClose} className="close-btn"><X/></button>
         
-        <div className="upload-area" onClick={!identifying ? triggerFileInput : undefined}>
+        <div className="upload-area" onClick={(!identifying && !identifiedName) ? triggerFileInput : undefined}>
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -67,6 +80,22 @@ const ImagePicker = ({ onIdentify, onClose }) => {
                 <div className="overlay">
                   <Loader2 className="spin" size={48} />
                   <span>Analyzing with AI...</span>
+                </div>
+              )}
+              {identifiedName && !identifying && (
+                <div className="result-overlay animate-fade-in">
+                  <div className="result-card glass-card">
+                    <span className="result-label">AI Identified Product:</span>
+                    <h3 className="product-name">{identifiedName}</h3>
+                    <div className="action-row">
+                      <button onClick={handleConfirmSearch} className="btn-primary search-confirm-btn">
+                        Search Now
+                      </button>
+                      <button onClick={resetPicker} className="btn-secondary reset-btn">
+                        Try Another
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -153,7 +182,7 @@ const ImagePicker = ({ onIdentify, onClose }) => {
           max-height: 400px;
           object-fit: contain;
         }
-        .overlay {
+        .overlay, .result-overlay {
           position: absolute;
           inset: 0;
           background: rgba(255,255,255,0.7);
@@ -166,6 +195,21 @@ const ImagePicker = ({ onIdentify, onClose }) => {
           color: var(--accent-blue);
           font-weight: 600;
         }
+        .result-overlay { background: rgba(255, 255, 255, 0.85); }
+        .result-card {
+          padding: 2rem;
+          text-align: center;
+          max-width: 90%;
+          border-radius: 20px;
+          border-color: var(--accent-blue);
+          background: white;
+        }
+        .result-label { font-size: 0.8rem; color: #86868b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem; }
+        .product-name { font-size: 1.5rem; color: #1d1d1f; margin-bottom: 1.5rem; line-height: 1.3; }
+        .action-row { display: flex; gap: 1rem; justify-content: center; }
+        .reset-btn { background: #f5f5f7; color: #1d1d1f; border: none; padding: 0.6rem 1.2rem; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .reset-btn:hover { background: #e8e8ed; }
+        
         .spin { animation: spin 1.5s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .mt-4 { margin-top: 1.5rem; }

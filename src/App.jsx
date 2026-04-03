@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Image, Sparkles, Loader2, Info } from 'lucide-react';
+import { Search, Image, Sparkles, Loader2, Info, AlertCircle } from 'lucide-react';
 import ImagePicker from './components/ImagePicker';
 import ProductDashboard from './components/ProductDashboard';
 import ShoppingGuide from './components/ShoppingGuide';
@@ -41,12 +41,18 @@ function App() {
 
   const handleSearchAutomated = async (searchQuery) => {
     setLoading(true);
+    setResults([]);
     setError(null);
     try {
       const data = await searchProducts(searchQuery);
-      setResults(data);
+      if (data && data.length > 0) {
+        setResults(data);
+      } else {
+        setError(`No results found for "${searchQuery}". Try a broader term.`);
+      }
     } catch (err) {
-      setError("Failed identifying product data.");
+      setError("Failed identifying product data. Please try again.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
